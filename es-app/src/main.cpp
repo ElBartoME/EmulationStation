@@ -21,6 +21,7 @@
 #include "ScraperCmdLine.h"
 #include <sstream>
 #include <boost/locale.hpp>
+#include "nfc.h"
 
 #ifdef WIN32
 #include <Windows.h>
