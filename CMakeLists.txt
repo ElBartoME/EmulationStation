@@ -62,6 +62,33 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     find_package(ALSA REQUIRED)
 endif()
 
+# Find the path to the pigpio includes.
+find_path(pigpio_INCLUDE_DIR
+        NAMES pigpio.h pigpiod_if.h pigpiod_if2.h
+        HINTS /usr/local/include)
+
+# Find the pigpio libraries.
+find_library(pigpio_LIBRARY
+        NAMES libpigpio.so
+        HINTS /usr/local/lib)
+find_library(pigpiod_if_LIBRARY
+        NAMES libpigpiod_if.so
+        HINTS /usr/local/lib)
+find_library(pigpiod_if2_LIBRARY
+        NAMES libpigpiod_if2.so
+        HINTS /usr/local/lib)
+
+# Set the pigpio variables to plural form to make them accessible for
+# the paramount cmake modules.
+set(pigpio_INCLUDE_DIRS ${pigpio_INCLUDE_DIR})
+set(pigpio_INCLUDES     ${pigpio_INCLUDE_DIR})
+
+# Handle REQUIRED, QUIET, and version arguments
+# and set the <packagename>_FOUND variable.
+find_package_handle_standard_args(pigpio
+    DEFAULT_MSG
+    pigpio_INCLUDE_DIR pigpio_LIBRARY pigpiod_if_LIBRARY pigpiod_if2_LIBRARY)
+
 #-------------------------------------------------------------------------------
 #set up compiler flags and excutable names
 if(DEFINED BCMHOST)
@@ -102,6 +129,7 @@ else()
 endif()
 
 add_definitions(-DEIGEN_DONT_ALIGN)
+add_definitions     ( ${LIBNFC_DEFINITIONS} )
 
 #-------------------------------------------------------------------------------
 #add include directories
@@ -115,6 +143,8 @@ set(COMMON_INCLUDE_DIRS
     ${VLC_INCLUDE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/external
     ${CMAKE_CURRENT_SOURCE_DIR}/es-core/src
+    ${LIBNFC_INCLUDE_DIRS}
+    ${pigpio_INCLUDE_DIR}
 )
 
 include_directories(/usr/include/qt5)
@@ -150,11 +180,13 @@ endif()
 if(DEFINED BCMHOST)
     link_directories(
         ${Boost_LIBRARY_DIRS}
+        ${LIBNFC_LIBRARY_DIRS}
         "/opt/vc/lib"
     )
 else()
     link_directories(
         ${Boost_LIBRARY_DIRS}
+        ${LIBNFC_LIBRARY_DIRS}
     )
 endif()
 
@@ -167,6 +199,8 @@ set(COMMON_LIBRARIES
     ${VLC_LIBRARIES}
     pugixml
     nanosvg
+    nfc
+    pigpiod_if2
 )
 
 #add ALSA for Linux
@@ -199,6 +233,7 @@ else()
         )
     endif()
 endif()
+
 
 #-------------------------------------------------------------------------------
 # set up build directories

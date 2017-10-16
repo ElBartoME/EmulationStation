@@ -22,14 +22,29 @@
 #include <sstream>
 #include <boost/locale.hpp>
 #include "nfc.h"
+#include <pigpiod_if2.h>
+#include <signal.h>
+#include <string.h>
+#include <stdio.h>
 
 #ifdef WIN32
 #include <Windows.h>
 #endif
 
+// Define the function to be called when ctrl-c (SIGINT) signal is sent to process
+void
+signal_callback_handler(int signum)
+{
+    std::cout << ViewController::get()->getGameListView(ViewController::get()->getState().getSystem()).get()->getCursor()->getSystemName() << " " << ViewController::get()->getGameListView(ViewController::get()->getState().getSystem()).get()->getCursor()->getFileName() << std::flush;
+}
+
 namespace fs = boost::filesystem;
 
 bool scrape_cmdline = false;
+
+bool pigpiod_available = false;
+
+int connectedPi;
 
 bool parseArgs(int argc, char* argv[], unsigned int* width, unsigned int* height)
 {
@@ -181,6 +196,8 @@ int main(int argc, char* argv[])
 {
 	srand((unsigned int)time(NULL));
 
+    signal(SIGINT, signal_callback_handler);
+
 	unsigned int width = 0;
 	unsigned int height = 0;
 
@@ -235,7 +252,17 @@ int main(int argc, char* argv[])
 	//always close the log on exit
 	atexit(&onExit);
 
-	Window window;
+    connectedPi = pigpio_start(NULL,NULL);
+    if(connectedPi  < 0)
+        pigpiod_available = false;
+    else
+    {
+        pigpiod_available = true;
+        set_mode(connectedPi,20,PI_INPUT);
+        set_pull_up_down(connectedPi,20,PI_PUD_UP);
+    }
+
+    Window window;
 	SystemScreenSaver screensaver(&window);
 	PowerSaver::init();
 	ViewController::init(&window);
@@ -308,6 +335,7 @@ int main(int argc, char* argv[])
 
 	int lastTime = SDL_GetTicks();
 	int ps_time = SDL_GetTicks();
+    int buttonTime, buttonLastState = 0;
 
 	bool running = true;
 	bool ps_standby = false;
@@ -315,7 +343,49 @@ int main(int argc, char* argv[])
 	while(running)
 	{
 		SDL_Event event;
-		bool ps_standby = PowerSaver::getState() && SDL_GetTicks() - ps_time > PowerSaver::getMode();
+        bool ps_standby = PowerSaver::getState()    && SDL_GetTicks() - ps_time > PowerSaver::getMode();
+
+        if(pigpiod_available)
+        {
+            if(gpio_read(connectedPi,20) && !buttonLastState)
+            {
+                buttonTime = SDL_GetTicks();
+                buttonLastState = 1;
+            }
+            else if(!gpio_read(connectedPi,20) & buttonLastState)
+            {
+                int buttonDeltaTime = SDL_GetTicks() - buttonTime;
+                if(buttonDeltaTime < 3000)  //short-press
+                {
+                    //read nfc tag and start game
+
+                    game temp;
+                    temp = readGame();
+                    std::string path = "/home/pi/RetroPie/roms/" + temp.gametype + "/" + temp.filename;
+                    boost::filesystem::path filepath{path.c_str()};
+                    std::vector<SystemData*> Systems = SystemData::sSystemVector;
+                     for(auto i = Systems.begin(); i != Systems.end(); i++)
+                     {
+                         if((*i)->getName() == temp.gametype)
+                         {
+                             FileData *game = new FileData(GAME, filepath.generic_string(),(*i)->getSystemEnvData(),(*i));
+                             ViewController::get()->launch(game);
+                         }
+                     }
+                }
+                else    //long-press
+                {
+                    //read current game and write to nfc tag
+                    game temp;
+                    temp.gametype = ViewController::get()->getGameListView(ViewController::get()->getState().getSystem()).get()->getCursor()->getSystemName();
+                    temp.filename = ViewController::get()->getGameListView(ViewController::get()->getState().getSystem()).get()->getCursor()->getFileName();
+                    writeGame(temp);
+
+                }
+            }
+
+
+        }
 
 		if(ps_standby ? SDL_WaitEventTimeout(&event, PowerSaver::getTimeout()) : SDL_PollEvent(&event))
 		{
@@ -323,7 +393,9 @@ int main(int argc, char* argv[])
 			{
 				switch(event.type)
 				{
-					case SDL_JOYHATMOTION:
+                    case SDL_USEREVENT:
+                    printf("User Event");
+                    case SDL_JOYHATMOTION:
 					case SDL_JOYBUTTONDOWN:
 					case SDL_JOYBUTTONUP:
 					case SDL_KEYDOWN:

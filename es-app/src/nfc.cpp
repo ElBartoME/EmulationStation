@@ -1,7 +1,5 @@
 #include "nfc.h"
 
-game exampleGame = { SNES, "Super Mario World (USA).zip" };
-
 static nfc_device *pnd;
 static nfc_target nt;
 static mifare_param mp;
@@ -356,7 +354,7 @@ static size_t str_to_uid(const char *str, uint8_t *uid)
     return i >> 1;
 }
 
-static game readGame()
+game readGame()
 {
     uint8_t iUID[MAX_UID_LEN] = { 0x0 };
     size_t  szUID = 0;
@@ -455,6 +453,26 @@ static game readGame()
 
     temp.gametype = (ENUM_GAMETYPE) mtDump.amb[1].mbd.abtData[0];
 
+    switch((ENUM_GAMETYPE)mtDump.amb[1].mbd.abtData[0])
+    {
+        case NES:
+            temp.gametype = "nes";
+            break;
+        case SNES:
+            temp.gametype = "snes";
+        case GB:
+            temp.gametype = "GB";
+            break;
+        case GBC:
+            temp.gametype = "GBC";
+            break;
+        case GBA:
+            temp.gametype = "GBA";
+            break;
+        case GENESIS:
+            temp.gametype = "genesis";
+            break;
+    }
 
     for (int i = 0; i <= mtDump.amb[2].mbd.abtData[0] / 16; i++)
     {
@@ -476,7 +494,7 @@ static game readGame()
 }
 
 
-static bool writeGame(game out)
+bool writeGame(game out)
 {
 
     uint8_t iUID[MAX_UID_LEN] = { 0x0 };
@@ -555,7 +573,18 @@ static bool writeGame(game out)
             mtDump.amb[i].mbd.abtData[j] = 0;
     }
 
-    mtDump.amb[1].mbd.abtData[0] = out.gametype;
+    if(out.gametype == "nes")
+        mtDump.amb[1].mbd.abtData[0] = NES;
+    else if(out.gametype == "snes")
+        mtDump.amb[1].mbd.abtData[0] = SNES;
+    else if(out.gametype == "gb")
+        mtDump.amb[1].mbd.abtData[0] = GB;
+    else if(out.gametype == "gbc")
+        mtDump.amb[1].mbd.abtData[0] = GBC;
+    else if(out.gametype == "gba")
+        mtDump.amb[1].mbd.abtData[0] = GBA;
+    else if(out.gametype == "genesis" || out.gametype == "megadrive")
+        mtDump.amb[1].mbd.abtData[0] = GENESIS;
 
     std::string temp = out.filename;
 

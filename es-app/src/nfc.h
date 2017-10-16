@@ -41,9 +41,12 @@ typedef enum
 
 typedef struct
 {
-    ENUM_GAMETYPE gametype;
+    std::string gametype;
     std::string filename;
 } game;
 
 static void print_success_or_failure(bool bFailure, uint32_t *uiCounter);
 static  bool read_card(void);
+
+game readGame();
+bool writeGame(game out);
