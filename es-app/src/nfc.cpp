@@ -385,30 +385,30 @@ game readGame()
     }
     printf("NFC device: %s opened\n", nfc_device_get_name(pnd));
 
-    if (list_passive_targets(pnd)) {
+/*     if (list_passive_targets(pnd)) {
         nfc_perror(pnd, "nfc_device_set_property_bool");
         nfc_close(pnd);
         nfc_exit(context);
 		return(temp);
 //        exit(EXIT_FAILURE);
-    }
+    } */
 
-    if (nfc_initiator_init(pnd) < 0) {
+/*     if (nfc_initiator_init(pnd) < 0) {
         nfc_perror(pnd, "nfc_initiator_init");
         nfc_close(pnd);
         nfc_exit(context);
 		return(temp);
 //        exit(EXIT_FAILURE);
-    }
+    } */
 
-    // Let the device only try once to find a tag
+/*     // Let the device only try once to find a tag
     if(nfc_device_set_property_bool(pnd, NP_INFINITE_SELECT, false) < 0) {
         nfc_perror(pnd, "nfc_device_set_property_bool");
         nfc_close(pnd);
         nfc_exit(context);
 		return(temp);
 //        exit(EXIT_FAILURE);
-    }
+    } */
 
     // Try to find a MIFARE Ultralight tag
     if(nfc_initiator_select_passive_target(pnd, nmMifare, (szUID) ? iUID : NULL, szUID, &nt) <= 0) {
@@ -427,13 +427,13 @@ game readGame()
 		return(temp);
 //        exit(EXIT_FAILURE);
     }
-    // Get the info from the current tag
+/*     // Get the info from the current tag
     printf("Using MIFARE Ultralight card with UID: ");
     size_t  szPos;
     for (szPos = 0; szPos < nt.nti.nai.szUidLen; szPos++) {
         printf("%02x", nt.nti.nai.abtUid[szPos]);
     }
-    printf("\n");
+    printf("\n"); */
 
     bool bRF = read_card();
 
@@ -529,30 +529,30 @@ bool writeGame(game out)
     }
     printf("NFC device: %s opened\n", nfc_device_get_name(pnd));
 
-    if (list_passive_targets(pnd)) {
+/*     if (list_passive_targets(pnd)) {
         nfc_perror(pnd, "nfc_device_set_property_bool");
         nfc_close(pnd);
         nfc_exit(context);
 		return false;
 //        exit(EXIT_FAILURE);
-    }
+    } */
 
-    if (nfc_initiator_init(pnd) < 0) {
+/*     if (nfc_initiator_init(pnd) < 0) {
         nfc_perror(pnd, "nfc_initiator_init");
         nfc_close(pnd);
         nfc_exit(context);
 		return false;
 //        exit(EXIT_FAILURE);
-    }
+    } */
 
-    // Let the device only try once to find a tag
+/*     // Let the device only try once to find a tag
     if(nfc_device_set_property_bool(pnd, NP_INFINITE_SELECT, false) < 0) {
         nfc_perror(pnd, "nfc_device_set_property_bool");
         nfc_close(pnd);
         nfc_exit(context);
 		return false;
 //        exit(EXIT_FAILURE);
-    }
+    } */
 
     // Try to find a MIFARE Ultralight tag
     if(nfc_initiator_select_passive_target(pnd, nmMifare, (szUID) ? iUID : NULL, szUID, &nt) <= 0) {
@@ -571,13 +571,13 @@ bool writeGame(game out)
 		return false;
 //        exit(EXIT_FAILURE);
     }
-    // Get the info from the current tag
+/*     // Get the info from the current tag
     printf("Using MIFARE Ultralight card with UID: ");
     size_t  szPos;
     for (szPos = 0; szPos < nt.nti.nai.szUidLen; szPos++) {
         printf("%02x", nt.nti.nai.abtUid[szPos]);
     }
-    printf("\n");
+    printf("\n"); */
 
     bool bRF = read_card();
 

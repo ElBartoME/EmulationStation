@@ -26,6 +26,7 @@
 #include <signal.h>
 #include <string.h>
 #include <stdio.h>
+#include "guis/GuiInfoPopup.h"
 
 #ifdef WIN32
 #include <Windows.h>
@@ -390,6 +391,9 @@ int main(int argc, char* argv[])
 					printf(temp.filename.c_str());
 					fflush(stdout);
 					writeGame(temp);
+					GuiInfoPopup* s;
+                    s = new GuiInfoPopup(&window, "Writing to NFC tag successful", 4000);
+					window.setInfoPopup(s);
                 }
 		buttonLastState = 0;
             }
