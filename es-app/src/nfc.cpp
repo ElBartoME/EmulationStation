@@ -365,11 +365,14 @@ game readGame()
 
     char fileName[] = "dump.mfd";
 
+    game temp = {"", ""};
+
     nfc_context *context;
     nfc_init(&context);
     if (context == NULL) {
-        ERR("Unable to init libnfc (malloc)");
-        exit(EXIT_FAILURE);
+//        ERR("Unable to init libnfc (malloc)");
+		return(temp);
+//        exit(EXIT_FAILURE);
     }
 
     // Try to open the NFC device
@@ -377,7 +380,8 @@ game readGame()
     if (pnd == NULL) {
         ERR("Error opening NFC device");
         nfc_exit(context);
-        exit(EXIT_FAILURE);
+		return(temp);
+//        exit(EXIT_FAILURE);
     }
     printf("NFC device: %s opened\n", nfc_device_get_name(pnd));
 
@@ -385,14 +389,16 @@ game readGame()
         nfc_perror(pnd, "nfc_device_set_property_bool");
         nfc_close(pnd);
         nfc_exit(context);
-        exit(EXIT_FAILURE);
+		return(temp);
+//        exit(EXIT_FAILURE);
     }
 
     if (nfc_initiator_init(pnd) < 0) {
         nfc_perror(pnd, "nfc_initiator_init");
         nfc_close(pnd);
         nfc_exit(context);
-        exit(EXIT_FAILURE);
+		return(temp);
+//        exit(EXIT_FAILURE);
     }
 
     // Let the device only try once to find a tag
@@ -400,23 +406,26 @@ game readGame()
         nfc_perror(pnd, "nfc_device_set_property_bool");
         nfc_close(pnd);
         nfc_exit(context);
-        exit(EXIT_FAILURE);
+		return(temp);
+//        exit(EXIT_FAILURE);
     }
 
     // Try to find a MIFARE Ultralight tag
     if(nfc_initiator_select_passive_target(pnd, nmMifare, (szUID) ? iUID : NULL, szUID, &nt) <= 0) {
-        ERR("no tag was found\n");
+//        ERR("no tag was found\n");
         nfc_close(pnd);
         nfc_exit(context);
-        exit(EXIT_FAILURE);
+		return(temp);
+//        exit(EXIT_FAILURE);
     }
 
     // Test if we are dealing with a MIFARE compatible tag
     if(nt.nti.nai.abtAtqa[1] != 0x44) {
-        ERR("tag is not a MIFARE Ultralight card\n");
+//        ERR("tag is not a MIFARE Ultralight card\n");
         nfc_close(pnd);
         nfc_exit(context);
-        exit(EXIT_FAILURE);
+		return(temp);
+//        exit(EXIT_FAILURE);
     }
     // Get the info from the current tag
     printf("Using MIFARE Ultralight card with UID: ");
@@ -448,9 +457,6 @@ game readGame()
     fclose(pfDump);
     printf("Done.\n");
 
-
-    game temp;
-
     temp.gametype = (ENUM_GAMETYPE) mtDump.amb[1].mbd.abtData[0];
 
     switch((ENUM_GAMETYPE)mtDump.amb[1].mbd.abtData[0])
@@ -460,6 +466,7 @@ game readGame()
             break;
         case SNES:
             temp.gametype = "snes";
+			break;
         case GB:
             temp.gametype = "GB";
             break;
@@ -507,16 +514,18 @@ bool writeGame(game out)
     nfc_context *context;
     nfc_init(&context);
     if (context == NULL) {
-        ERR("Unable to init libnfc (malloc)");
-        exit(EXIT_FAILURE);
+//        ERR("Unable to init libnfc (malloc)");
+		return false;
+//        exit(EXIT_FAILURE);
     }
 
     // Try to open the NFC device
     pnd = nfc_open(context, NULL);
     if (pnd == NULL) {
-        ERR("Error opening NFC device");
+//        ERR("Error opening NFC device");
         nfc_exit(context);
-        exit(EXIT_FAILURE);
+		return false;
+//        exit(EXIT_FAILURE);
     }
     printf("NFC device: %s opened\n", nfc_device_get_name(pnd));
 
@@ -524,14 +533,16 @@ bool writeGame(game out)
         nfc_perror(pnd, "nfc_device_set_property_bool");
         nfc_close(pnd);
         nfc_exit(context);
-        exit(EXIT_FAILURE);
+		return false;
+//        exit(EXIT_FAILURE);
     }
 
     if (nfc_initiator_init(pnd) < 0) {
         nfc_perror(pnd, "nfc_initiator_init");
         nfc_close(pnd);
         nfc_exit(context);
-        exit(EXIT_FAILURE);
+		return false;
+//        exit(EXIT_FAILURE);
     }
 
     // Let the device only try once to find a tag
@@ -539,15 +550,17 @@ bool writeGame(game out)
         nfc_perror(pnd, "nfc_device_set_property_bool");
         nfc_close(pnd);
         nfc_exit(context);
-        exit(EXIT_FAILURE);
+		return false;
+//        exit(EXIT_FAILURE);
     }
 
     // Try to find a MIFARE Ultralight tag
     if(nfc_initiator_select_passive_target(pnd, nmMifare, (szUID) ? iUID : NULL, szUID, &nt) <= 0) {
-        ERR("no tag was found\n");
+//        ERR("no tag was found\n");
         nfc_close(pnd);
         nfc_exit(context);
-        exit(EXIT_FAILURE);
+		return false;
+//        exit(EXIT_FAILURE);
     }
 
     // Test if we are dealing with a MIFARE compatible tag
@@ -555,7 +568,8 @@ bool writeGame(game out)
         ERR("tag is not a MIFARE Ultralight card\n");
         nfc_close(pnd);
         nfc_exit(context);
-        exit(EXIT_FAILURE);
+		return false;
+//        exit(EXIT_FAILURE);
     }
     // Get the info from the current tag
     printf("Using MIFARE Ultralight card with UID: ");

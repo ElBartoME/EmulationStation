@@ -347,31 +347,37 @@ int main(int argc, char* argv[])
 
         if(pigpiod_available)
         {
-            if(gpio_read(connectedPi,20) && !buttonLastState)
+            if(gpio_read(connectedPi,20) == 0 && !buttonLastState)
             {
                 buttonTime = SDL_GetTicks();
                 buttonLastState = 1;
             }
-            else if(!gpio_read(connectedPi,20) & buttonLastState)
+            else if(gpio_read(connectedPi,20) == 1 && buttonLastState)
             {
                 int buttonDeltaTime = SDL_GetTicks() - buttonTime;
-                if(buttonDeltaTime < 3000)  //short-press
+//				std::cout << std::to_string(buttonDeltaTime);
+				printf(" %d ",buttonDeltaTime);
+                if(buttonDeltaTime < 4000)  //short-press
                 {
                     //read nfc tag and start game
 
                     game temp;
                     temp = readGame();
-                    std::string path = "/home/pi/RetroPie/roms/" + temp.gametype + "/" + temp.filename;
-                    boost::filesystem::path filepath{path.c_str()};
-                    std::vector<SystemData*> Systems = SystemData::sSystemVector;
-                     for(auto i = Systems.begin(); i != Systems.end(); i++)
-                     {
-                         if((*i)->getName() == temp.gametype)
-                         {
-                             FileData *game = new FileData(GAME, filepath.generic_string(),(*i)->getSystemEnvData(),(*i));
-                             ViewController::get()->launch(game);
-                         }
-                     }
+					if(temp.gametype != "")
+					{
+						std::string path = "/home/pi/RetroPie/roms/" + temp.gametype + "/" + temp.filename;
+						//printf(path.c_str());
+						boost::filesystem::path filepath{path.c_str()};
+						std::vector<SystemData*> Systems = SystemData::sSystemVector;
+						for(auto i = Systems.begin(); i != Systems.end(); i++)
+						{
+							if((*i)->getName() == temp.gametype)
+							{
+								FileData *game = new FileData(GAME, filepath.generic_string(),(*i)->getSystemEnvData(),(*i));
+								ViewController::get()->launch(game);
+							}
+						}
+					}
                 }
                 else    //long-press
                 {
@@ -379,9 +385,13 @@ int main(int argc, char* argv[])
                     game temp;
                     temp.gametype = ViewController::get()->getGameListView(ViewController::get()->getState().getSystem()).get()->getCursor()->getSystemName();
                     temp.filename = ViewController::get()->getGameListView(ViewController::get()->getState().getSystem()).get()->getCursor()->getFileName();
-                    writeGame(temp);
-
+                    printf("%d",buttonDeltaTime);
+					printf(temp.gametype.c_str());
+					printf(temp.filename.c_str());
+					fflush(stdout);
+					writeGame(temp);
                 }
+		buttonLastState = 0;
             }
 
 
