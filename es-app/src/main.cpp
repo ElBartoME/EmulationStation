@@ -23,7 +23,6 @@
 #include <boost/locale.hpp>
 #include "nfc.h"
 #include <pigpiod_if2.h>
-#include <signal.h>
 #include <string.h>
 #include <stdio.h>
 #include "guis/GuiInfoPopup.h"
@@ -31,13 +30,6 @@
 #ifdef WIN32
 #include <Windows.h>
 #endif
-
-// Define the function to be called when ctrl-c (SIGINT) signal is sent to process
-void
-signal_callback_handler(int signum)
-{
-    std::cout << ViewController::get()->getGameListView(ViewController::get()->getState().getSystem()).get()->getCursor()->getSystemName() << " " << ViewController::get()->getGameListView(ViewController::get()->getState().getSystem()).get()->getCursor()->getFileName() << std::flush;
-}
 
 namespace fs = boost::filesystem;
 
@@ -197,8 +189,6 @@ int main(int argc, char* argv[])
 {
 	srand((unsigned int)time(NULL));
 
-    signal(SIGINT, signal_callback_handler);
-
 	unsigned int width = 0;
 	unsigned int height = 0;
 
@@ -355,9 +345,7 @@ int main(int argc, char* argv[])
             }
             else if(gpio_read(connectedPi,20) == 1 && buttonLastState)
             {
-                int buttonDeltaTime = SDL_GetTicks() - buttonTime;
-//				std::cout << std::to_string(buttonDeltaTime);
-				printf(" %d ",buttonDeltaTime);
+				int buttonDeltaTime = SDL_GetTicks() - buttonTime;
                 if(buttonDeltaTime < 4000)  //short-press
                 {
                     //read nfc tag and start game
@@ -366,16 +354,23 @@ int main(int argc, char* argv[])
                     temp = readGame();
 					if(temp.gametype != "")
 					{
-						std::string path = "/home/pi/RetroPie/roms/" + temp.gametype + "/" + temp.filename;
-						//printf(path.c_str());
-						boost::filesystem::path filepath{path.c_str()};
 						std::vector<SystemData*> Systems = SystemData::sSystemVector;
 						for(auto i = Systems.begin(); i != Systems.end(); i++)
 						{
 							if((*i)->getName() == temp.gametype)
 							{
-								FileData *game = new FileData(GAME, filepath.generic_string(),(*i)->getSystemEnvData(),(*i));
-								ViewController::get()->launch(game);
+								const std::unordered_map<std::string, FileData*>& children = (*i)->getRootFolder()->getChildrenByFilename();
+								bool found = children.find(temp.filename) != children.end();
+								if(found)
+								{
+									FileData* game = children.at(temp.filename);
+									ViewController::get()->launch(game);
+								}
+								else
+								{
+									GuiInfoPopup* s = new GuiInfoPopup(&window, "Game on tag not found in library", 4000);
+									window.setInfoPopup(s);
+								}
 							}
 						}
 					}
@@ -386,14 +381,17 @@ int main(int argc, char* argv[])
                     game temp;
                     temp.gametype = ViewController::get()->getGameListView(ViewController::get()->getState().getSystem()).get()->getCursor()->getSystemName();
                     temp.filename = ViewController::get()->getGameListView(ViewController::get()->getState().getSystem()).get()->getCursor()->getFileName();
-                    printf("%d",buttonDeltaTime);
-					printf(temp.gametype.c_str());
-					printf(temp.filename.c_str());
 					fflush(stdout);
-					writeGame(temp);
-					GuiInfoPopup* s;
-                    s = new GuiInfoPopup(&window, "Writing to NFC tag successful", 4000);
-					window.setInfoPopup(s);
+					if(writeGame(temp))
+					{
+						GuiInfoPopup* s = new GuiInfoPopup(&window, "Writing to NFC tag successful", 4000);
+						window.setInfoPopup(s);				
+					}
+					else
+					{
+						GuiInfoPopup* s = new GuiInfoPopup(&window, "Writing to NFC tag failed", 4000);
+						window.setInfoPopup(s);
+					}
                 }
 		buttonLastState = 0;
             }

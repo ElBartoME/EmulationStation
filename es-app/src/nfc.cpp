@@ -34,7 +34,7 @@ static const nfc_modulation nmMifare = {
 
 static void print_success_or_failure(bool bFailure, uint32_t *uiOkCounter, uint32_t *uiFailedCounter)
 {
-    printf("%c", (bFailure) ? 'f' : '.');
+    //printf("%c", (bFailure) ? 'f' : '.');
     if (uiOkCounter)
         *uiOkCounter += (bFailure) ? 0 : 1;
     if (uiFailedCounter)
@@ -47,7 +47,7 @@ static  bool read_card(void)
     bool    bFailure = false;
     uint32_t uiFailedPages = 0;
 
-    printf("Reading %d pages |", uiBlocks);
+    //printf("Reading %d pages |", uiBlocks);
 
     for (page = 0; page < uiBlocks; page += 4) {
         // Try to read out the data block
@@ -60,8 +60,8 @@ static  bool read_card(void)
             print_success_or_failure(bFailure, &uiReadPages, &uiFailedPages);
         }
     }
-    printf("|\n");
-    printf("Done, %d of %d pages read (%d pages failed).\n", uiReadPages, uiBlocks, uiFailedPages);
+    //printf("|\n");
+    //printf("Done, %d of %d pages read (%d pages failed).\n", uiReadPages, uiBlocks, uiFailedPages);
     fflush(stdout);
 
     // copy EV1 secrets to dump data
@@ -218,7 +218,7 @@ static bool check_magic()
 
     //Check that the ID is now set to 0x000000000000
     if(nfc_initiator_mifare_cmd(pnd, MC_READ, 0, &mp)) {
-        //printf("%u", mp.mpd.abtData);
+        ////printf("%u", mp.mpd.abtData);
         bool result = true;
         for (int i = 0; i <= 7; i++) {
             if (mp.mpd.abtData[i] != 0x00) result = false;
@@ -253,27 +253,27 @@ static  bool write_card(bool write_otp, bool write_lock, bool write_uid)
     write_lock = false;
     write_uid = false;
 
-    printf("Writing %d pages |", uiBlocks);
+    //printf("Writing %d pages |", uiBlocks);
     /* We may need to skip 2 first pages. */
     if (!write_uid) {
-        printf("ss");
+        //printf("ss");
         uiSkippedPages = 2;
     }
     else {
         if (!check_magic()) {
-            printf("\nUnable to unlock card - are you sure the card is magic?\n");
+            //printf("\nUnable to unlock card - are you sure the card is magic?\n");
             return false;
         }
     }
 
     for (uint32_t page = uiSkippedPages; page < uiBlocks; page++) {
         if ((page == 0x2) && (!write_lock)) {
-            printf("s");
+            //printf("s");
             uiSkippedPages++;
             continue;
         }
         if ((page == 0x3) && (!write_otp)) {
-            printf("s");
+            //printf("s");
             uiSkippedPages++;
             continue;
         }
@@ -297,8 +297,8 @@ static  bool write_card(bool write_otp, bool write_lock, bool write_uid)
             bFailure = true;
         print_success_or_failure(bFailure, &uiWrittenPages, &uiFailedPages);
     }
-    printf("|\n");
-    printf("Done, %d of %d pages written (%d pages skipped, %d pages failed).\n", uiWrittenPages, uiBlocks, uiSkippedPages, uiFailedPages);
+    //printf("|\n");
+    //printf("Done, %d of %d pages written (%d pages skipped, %d pages failed).\n", uiWrittenPages, uiBlocks, uiSkippedPages, uiFailedPages);
 
     return true;
 }
@@ -317,16 +317,16 @@ static int list_passive_targets(nfc_device *_pnd)
         int i;
 
         if (res > 0)
-            printf("%d ISO14443A passive target(s) found:\n", res);
+            //printf("%d ISO14443A passive target(s) found:\n", res);
 
         for (i = 0; i < res; i++) {
             size_t  szPos;
 
-            printf("\t");
+            //printf("\t");
             for (szPos = 0; szPos < ant[i].nti.nai.szUidLen; szPos++) {
-                printf("%02x", ant[i].nti.nai.abtUid[szPos]);
+                //printf("%02x", ant[i].nti.nai.abtUid[szPos]);
             }
-            printf("\n");
+            //printf("\n");
         }
 
     }
@@ -383,7 +383,7 @@ game readGame()
 		return(temp);
 //        exit(EXIT_FAILURE);
     }
-    printf("NFC device: %s opened\n", nfc_device_get_name(pnd));
+    //printf("NFC device: %s opened\n", nfc_device_get_name(pnd));
 
 /*     if (list_passive_targets(pnd)) {
         nfc_perror(pnd, "nfc_device_set_property_bool");
@@ -428,34 +428,34 @@ game readGame()
 //        exit(EXIT_FAILURE);
     }
 /*     // Get the info from the current tag
-    printf("Using MIFARE Ultralight card with UID: ");
+    //printf("Using MIFARE Ultralight card with UID: ");
     size_t  szPos;
     for (szPos = 0; szPos < nt.nti.nai.szUidLen; szPos++) {
-        printf("%02x", nt.nti.nai.abtUid[szPos]);
+        //printf("%02x", nt.nti.nai.abtUid[szPos]);
     }
-    printf("\n"); */
+    //printf("\n"); */
 
     bool bRF = read_card();
 
-    printf("Writing data to file: %s ... ", fileName);
+    //printf("Writing data to file: %s ... ", fileName);
     fflush(stdout);
     pfDump = fopen(fileName, "wb");
     if (pfDump == NULL) {
-        printf("Could not open file: %s\n", fileName);
+        //printf("Could not open file: %s\n", fileName);
         nfc_close(pnd);
         nfc_exit(context);
         exit(EXIT_FAILURE);
     }
 
     if (fwrite(&mtDump, 1, uiReadPages * 4, pfDump) != uiReadPages * 4) {
-        printf("Could not write to file: %s\n", fileName);
+        //printf("Could not write to file: %s\n", fileName);
         fclose(pfDump);
         nfc_close(pnd);
         nfc_exit(context);
         exit(EXIT_FAILURE);
     }
     fclose(pfDump);
-    printf("Done.\n");
+    //printf("Done.\n");
 
     temp.gametype = (ENUM_GAMETYPE) mtDump.amb[1].mbd.abtData[0];
 
@@ -468,13 +468,13 @@ game readGame()
             temp.gametype = "snes";
 			break;
         case GB:
-            temp.gametype = "GB";
+            temp.gametype = "gb";
             break;
         case GBC:
-            temp.gametype = "GBC";
+            temp.gametype = "gbc";
             break;
         case GBA:
-            temp.gametype = "GBA";
+            temp.gametype = "gba";
             break;
         case GENESIS:
             temp.gametype = "genesis";
@@ -527,7 +527,7 @@ bool writeGame(game out)
 		return false;
 //        exit(EXIT_FAILURE);
     }
-    printf("NFC device: %s opened\n", nfc_device_get_name(pnd));
+    //printf("NFC device: %s opened\n", nfc_device_get_name(pnd));
 
 /*     if (list_passive_targets(pnd)) {
         nfc_perror(pnd, "nfc_device_set_property_bool");
@@ -572,12 +572,12 @@ bool writeGame(game out)
 //        exit(EXIT_FAILURE);
     }
 /*     // Get the info from the current tag
-    printf("Using MIFARE Ultralight card with UID: ");
+    //printf("Using MIFARE Ultralight card with UID: ");
     size_t  szPos;
     for (szPos = 0; szPos < nt.nti.nai.szUidLen; szPos++) {
-        printf("%02x", nt.nti.nai.abtUid[szPos]);
+        //printf("%02x", nt.nti.nai.abtUid[szPos]);
     }
-    printf("\n"); */
+    //printf("\n"); */
 
     bool bRF = read_card();
 
