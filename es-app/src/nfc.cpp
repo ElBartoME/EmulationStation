@@ -401,14 +401,14 @@ game readGame()
 //        exit(EXIT_FAILURE);
     } */
 
-/*     // Let the device only try once to find a tag
+     // Let the device only try once to find a tag
     if(nfc_device_set_property_bool(pnd, NP_INFINITE_SELECT, false) < 0) {
         nfc_perror(pnd, "nfc_device_set_property_bool");
         nfc_close(pnd);
         nfc_exit(context);
 		return(temp);
 //        exit(EXIT_FAILURE);
-    } */
+    } 
 
     // Try to find a MIFARE Ultralight tag
     if(nfc_initiator_select_passive_target(pnd, nmMifare, (szUID) ? iUID : NULL, szUID, &nt) <= 0) {
@@ -478,7 +478,10 @@ game readGame()
             break;
         case GENESIS:
             temp.gametype = "genesis";
-            break;
+            break;			
+		case PSX:
+			temp.gametype = "psx";
+			break;
     }
 
     for (int i = 0; i <= mtDump.amb[2].mbd.abtData[0] / 16; i++)
@@ -545,14 +548,14 @@ bool writeGame(game out)
 //        exit(EXIT_FAILURE);
     } */
 
-/*     // Let the device only try once to find a tag
+     // Let the device only try once to find a tag
     if(nfc_device_set_property_bool(pnd, NP_INFINITE_SELECT, false) < 0) {
         nfc_perror(pnd, "nfc_device_set_property_bool");
         nfc_close(pnd);
         nfc_exit(context);
 		return false;
 //        exit(EXIT_FAILURE);
-    } */
+    } 
 
     // Try to find a MIFARE Ultralight tag
     if(nfc_initiator_select_passive_target(pnd, nmMifare, (szUID) ? iUID : NULL, szUID, &nt) <= 0) {
@@ -599,6 +602,8 @@ bool writeGame(game out)
         mtDump.amb[1].mbd.abtData[0] = GBA;
     else if(out.gametype == "genesis" || out.gametype == "megadrive")
         mtDump.amb[1].mbd.abtData[0] = GENESIS;
+	else if(out.gametype == "psx")
+		mtDump.amb[1].mbd.abtData[0] = PSX;
 
     std::string temp = out.filename;
 

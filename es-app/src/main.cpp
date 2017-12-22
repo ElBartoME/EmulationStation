@@ -374,6 +374,11 @@ int main(int argc, char* argv[])
 							}
 						}
 					}
+					else
+					{
+						GuiInfoPopup* s = new GuiInfoPopup(&window, "Reading from NFC tag failed", 4000);
+						window.setInfoPopup(s);						
+					}
                 }
                 else    //long-press
                 {

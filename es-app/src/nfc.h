@@ -36,7 +36,8 @@ typedef enum
     GB,
     GBC,
     GBA,
-    GENESIS
+    GENESIS,
+	PSX
 } ENUM_GAMETYPE;
 
 typedef struct
